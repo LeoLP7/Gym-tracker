@@ -1,0 +1,1796 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>S-Tier PPL 4-Week Hypertrophy Tracker</title>
+
+  <!-- PWA & Mobile Home Screen Meta Tags -->
+  <meta name="theme-color" content="#09090b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PPL Tracker" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- Inline SVG App Icon & PWA Manifest (No base64, GitHub Pages Ready) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%2309090b'/%3E%3Crect x='14' y='34' width='12' height='32' rx='4' fill='%2310b981'/%3E%3Crect x='74' y='34' width='12' height='32' rx='4' fill='%2310b981'/%3E%3Crect x='26' y='44' width='48' height='12' rx='3' fill='%23f59e0b'/%3E%3C/svg%3E" />
+  <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22S-Tier%20PPL%204-Week%20Hypertrophy%20Tracker%22%2C%22short_name%22%3A%22PPL%20Tracker%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%2309090b%22%2C%22theme_color%22%3A%22%2309090b%22%7D" />
+
+  <!-- Tailwind CSS & Google Font Inter -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    /* Custom scrollbar & mobile input polish */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #09090b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #27272a;
+      border-radius: 9999px;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    /* Ensure minimum 44px touch targets on mobile */
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased min-h-screen pb-36 selection:bg-emerald-500/30 selection:text-emerald-200">
+
+  <!-- Toast Notification Container (Replaces alert) -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none max-w-sm w-full px-4 sm:px-0"></div>
+
+  <!-- Custom Confirmation Modal (Replaces confirm) -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="bg-zinc-900 border border-zinc-700/80 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-11 h-11 rounded-xl bg-rose-500/15 border border-rose-500/30 flex items-center justify-center text-rose-400 shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-bold text-white">Reset All Workout Data?</h3>
+      </div>
+      <p class="text-sm text-zinc-300 leading-relaxed mb-6">
+        This will erase all logged weights, reps, RIR selections, and completed sets across Weeks 1–4. Export a JSON backup first if you want to keep your history.
+      </p>
+      <div class="flex items-center justify-end gap-3">
+        <button id="confirm-cancel-btn" class="touch-target px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-semibold transition">
+          Cancel
+        </button>
+        <button id="confirm-ok-btn" class="touch-target px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-sm font-semibold shadow-lg shadow-rose-600/20 transition">
+          Yes, Reset All
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Top App Header -->
+  <header class="sticky top-0 z-30 bg-zinc-950/92 backdrop-blur-md border-b border-zinc-800/90">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-3">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <!-- Brand & Title -->
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-amber-500 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+              <svg class="w-6 h-6 text-zinc-950" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h2m14 0h2M6 7v6m12-6v6M8 10h8" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="text-sm sm:text-lg font-extrabold tracking-tight text-white leading-tight">
+                S-Tier PPL 4-Week Hypertrophy Tracker
+              </h1>
+              <p class="text-[11px] sm:text-xs text-zinc-400">Lengthened-Stretch Science &bull; RIR Progressive Overload</p>
+            </div>
+          </div>
+
+          <!-- Screen Wake-Lock Button (Visible right away on mobile) -->
+          <button
+            id="wake-lock-btn"
+            onclick="toggleWakeLock()"
+            title="Keep phone screen awake while lifting"
+            class="touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-bold text-zinc-300 transition shrink-0">
+            <span id="wake-lock-dot" class="w-2 h-2 rounded-full bg-zinc-500"></span>
+            <span id="wake-lock-label">Keep Screen On</span>
+          </button>
+        </div>
+
+        <!-- Global Controls Bar -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Unit Toggle (kg / lbs) -->
+          <div class="inline-flex rounded-xl bg-zinc-900 p-1 border border-zinc-800" role="group" aria-label="Weight unit">
+            <button id="unit-kg-btn" onclick="setUnit('kg')" class="px-3 py-2 rounded-lg text-xs font-extrabold transition">KG</button>
+            <button id="unit-lbs-btn" onclick="setUnit('lbs')" class="px-3 py-2 rounded-lg text-xs font-extrabold transition">LBS</button>
+          </div>
+
+          <!-- Export JSON -->
+          <button onclick="exportData()" title="Download JSON Backup" class="touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span>Export JSON</span>
+          </button>
+
+          <!-- Import JSON -->
+          <label title="Restore JSON Backup" class="touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition cursor-pointer">
+            <svg class="w-4 h-4 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            <span>Import JSON</span>
+            <input id="import-file-input" type="file" accept=".json" class="hidden" onchange="importData(event)" />
+          </label>
+
+          <!-- Reset Data -->
+          <button onclick="requestResetData()" title="Reset All Data" class="touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-rose-950/60 border border-zinc-800 hover:border-rose-500/40 text-xs font-semibold text-zinc-400 hover:text-rose-300 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span class="hidden sm:inline">Reset</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-5 space-y-5">
+
+    <!-- 4-Week Mesocycle Selector Grid -->
+    <section aria-label="4-Week Mesocycle Selector" class="grid grid-cols-2 lg:grid-cols-4 gap-2.5" id="week-selector-grid">
+      <!-- Rendered dynamically -->
+    </section>
+
+    <!-- Dynamic RIR & Set-Extension Rules Banner -->
+    <section id="week-banner" class="rounded-2xl bg-gradient-to-r from-zinc-900 via-zinc-900 to-slate-900 border border-zinc-800 p-4 sm:p-5 shadow-lg">
+      <!-- Rendered dynamically -->
+    </section>
+
+    <!-- Workout Day Tabs + Live Session Progress -->
+    <section class="space-y-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <!-- Day Navigation Tabs (Large 44px+ touch targets) -->
+        <div class="grid grid-cols-4 gap-1.5 bg-zinc-900 p-1.5 rounded-2xl border border-zinc-800 w-full sm:w-auto" role="tablist">
+          <button id="tab-push" onclick="selectTab('push')" class="touch-target px-2.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center">
+            Day 1: Push
+          </button>
+          <button id="tab-pull" onclick="selectTab('pull')" class="touch-target px-2.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center">
+            Day 2: Pull
+          </button>
+          <button id="tab-legs" onclick="selectTab('legs')" class="touch-target px-2.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center">
+            Day 3: Legs
+          </button>
+          <button id="tab-analytics" onclick="selectTab('analytics')" class="touch-target px-2.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5">
+            <svg class="w-4 h-4 text-violet-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <span>Progress</span>
+          </button>
+        </div>
+
+        <!-- Copy Previous Week Weights Shortcut -->
+        <div id="day-quick-actions" class="flex items-center justify-end">
+          <button id="copy-prev-day-btn" onclick="copyPreviousWeekDay()" class="touch-target inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-bold text-emerald-300 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span>Copy Prev Week Weights</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Session Completion & Volume Load Bar -->
+      <div id="session-progress-wrapper" class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-3.5 sm:p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 text-xs mb-2">
+          <div class="flex items-center gap-2">
+            <span id="session-title-label" class="font-bold text-zinc-100">Day 1: Push</span>
+            <span id="session-volume-badge" class="px-2.5 py-0.5 rounded-md bg-violet-500/15 border border-violet-500/30 text-violet-300 font-bold">0 kg volume</span>
+          </div>
+          <span id="session-progress-text" class="font-extrabold text-emerald-400">0 / 15 Sets (0%)</span>
+        </div>
+        <div class="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
+          <div id="session-progress-bar" class="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-400 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Dynamic View (Workout Cards or Analytics Dashboard) -->
+    <section id="main-view-container" class="space-y-4">
+      <!-- Rendered dynamically -->
+    </section>
+
+  </main>
+
+  <!-- Sticky Bottom Rest Timer Bar (One-Handed Thumb Friendly) -->
+  <div class="fixed bottom-0 inset-x-0 z-40 bg-zinc-900/95 backdrop-blur-lg border-t border-zinc-800 shadow-2xl">
+    <div class="max-w-5xl mx-auto px-3 sm:px-6 py-2.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <!-- SVG Countdown Ring & Time Readout -->
+        <div class="flex items-center gap-2.5">
+          <div class="relative w-11 h-11 flex items-center justify-center shrink-0">
+            <svg class="w-11 h-11 -rotate-90" viewBox="0 0 36 36">
+              <circle cx="18" cy="18" r="15.5" fill="none" stroke="#27272a" stroke-width="3"></circle>
+              <circle id="timer-ring" cx="18" cy="18" r="15.5" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="97.4" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-300"></circle>
+            </svg>
+            <svg class="w-4 h-4 text-emerald-400 absolute" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-baseline gap-2">
+              <span id="timer-display" class="text-xl sm:text-2xl font-extrabold font-mono tracking-tight text-white">02:00</span>
+              <span id="timer-status" class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Ready</span>
+            </div>
+            <p class="text-[11px] text-zinc-400 hidden md:block">Auto-starts when you check off any completed set</p>
+          </div>
+        </div>
+
+        <!-- Quick Presets & -15s / +15s Adjustments -->
+        <div class="flex items-center gap-1 sm:gap-1.5">
+          <button onclick="adjustTimer(-15)" aria-label="Subtract 15 seconds" class="touch-target px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold text-zinc-300 transition">-15s</button>
+          <button onclick="setTimerPreset(90)" class="touch-target px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-200 transition">90s</button>
+          <button onclick="setTimerPreset(120)" class="touch-target px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-200 transition hidden sm:inline-flex items-center justify-center">2m</button>
+          <button onclick="setTimerPreset(180)" class="touch-target px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-bold text-zinc-200 transition">3m</button>
+          <button onclick="adjustTimer(15)" aria-label="Add 15 seconds" class="touch-target px-2.5 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-extrabold text-amber-300 transition">+15s</button>
+        </div>
+
+        <!-- Start/Pause & Reset Controls -->
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <button id="timer-toggle-btn" onclick="toggleTimer()" class="touch-target px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs sm:text-sm font-extrabold shadow-md shadow-emerald-500/20 transition">
+            Start
+          </button>
+          <button onclick="resetTimer()" class="touch-target px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs sm:text-sm font-semibold transition">
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 1. MESOCYCLE RIR METADATA & COMPLETE 3-DAY S-TIER PPL PROGRAM DATA
+    // =========================================================================
+    const WEEK_CONFIG = {
+      1: {
+        week: 1,
+        name: "Week 1: Calibration",
+        shortTitle: "Calibration",
+        compoundRIR: "3 RIR",
+        isolationRIR: "2 RIR",
+        setExtension: "None — Stop cleanly at target RIR",
+        goal: "Establish baseline weights with strict 2–3 sec eccentrics and deep lengthened-stretch pauses."
+      },
+      2: {
+        week: 2,
+        name: "Week 2: Build",
+        shortTitle: "Build",
+        compoundRIR: "2 RIR",
+        isolationRIR: "1–2 RIR",
+        setExtension: "None — Add +1 rep per set with same weights",
+        goal: "Beat Week 1's rep count on every exercise using the exact same weights while keeping strict control."
+      },
+      3: {
+        week: 3,
+        name: "Week 3: Push",
+        shortTitle: "Push",
+        compoundRIR: "1–2 RIR",
+        isolationRIR: "0–1 RIR",
+        setExtension: "Add Set Extensions on final sets (Partials, Kelso Shrugs, 2/3 Lockouts)",
+        goal: "Push isolations to technical failure; increase weight (+2.5–5 kg / +5–10 lbs) if you hit the top of the rep range."
+      },
+      4: {
+        week: 4,
+        name: "Week 4: Peak",
+        shortTitle: "Peak",
+        compoundRIR: "0–1 RIR",
+        isolationRIR: "0 RIR (Failure)",
+        setExtension: "Full Intensity — Partials, Kelso Shrugs & 2/3 Lockout reps on final sets",
+        goal: "Leave nothing in the tank (with strict form). Set mesocycle PRs before a 4–5 day Week 5 deload."
+      }
+    };
+
+    const PROGRAM_DATA = {
+      push: {
+        id: "push",
+        title: "Day 1: Push",
+        subtitle: "Chest, Side Delts & Triceps",
+        exercises: [
+          {
+            id: "push_1",
+            name: "Incline Barbell / Smith Press",
+            muscle: "Upper Chest",
+            type: "Compound",
+            sets: 3,
+            minReps: 6,
+            maxReps: 8,
+            restSeconds: 180,
+            restLabel: "3m",
+            cue: "20–45° bench angle. Lower under control to upper chest, pause 1 full second in the deep stretch, and drive up.",
+            extensionCue: null
+          },
+          {
+            id: "push_2",
+            name: "Seated Cable Fly / Pec Deck",
+            muscle: "Mid & Inner Chest",
+            type: "Isolation",
+            sets: 3,
+            minReps: 10,
+            maxReps: 12,
+            restSeconds: 120,
+            restLabel: "2m",
+            cue: "Set bench forward so cables pull arms behind torso for max pec stretch. Stop short of touching hands to keep constant tension.",
+            extensionCue: null
+          },
+          {
+            id: "push_3",
+            name: "Cable Lateral Raise (High / Hip)",
+            muscle: "Side Delts",
+            type: "Isolation",
+            sets: 4,
+            minReps: 12,
+            maxReps: 15,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Set handle at hip/hand height. Sweep wide rather than lifting straight up, pause 0.5s at top, and take 2–3s lowering into cross-body stretch.",
+            extensionCue: null
+          },
+          {
+            id: "push_4",
+            name: "Overhead Cable Triceps Ext.",
+            muscle: "Triceps (Long Head)",
+            type: "Isolation",
+            sets: 3,
+            minReps: 10,
+            maxReps: 12,
+            restSeconds: 120,
+            restLabel: "2m",
+            cue: "Staggered stance, keep elbows flared ~30–40°, and let forearms travel all the way behind your head for a deep long-head stretch.",
+            extensionCue: null
+          },
+          {
+            id: "push_5",
+            name: "Machine Dip / Deficit Push-Up",
+            muscle: "Lower Chest & Triceps",
+            type: "Compound",
+            sets: 2,
+            minReps: 8,
+            maxReps: 12,
+            restSeconds: 120,
+            restLabel: "2m",
+            cue: "Keep torso upright and drive elbows straight back into a deep stretch. In Weeks 3–4, stop at 2/3 lockout on final reps.",
+            extensionCue: "Final Set (W3–4): +2/3 Lockout Reps for continuous tension"
+          }
+        ]
+      },
+      pull: {
+        id: "pull",
+        title: "Day 2: Pull",
+        subtitle: "Lats, Mid-Back, Rear Delts & Biceps",
+        exercises: [
+          {
+            id: "pull_1",
+            name: "Weighted Pull-Up / Lat Pulldown",
+            muscle: "Lats & Teres Major",
+            type: "Compound",
+            sets: 3,
+            minReps: 6,
+            maxReps: 10,
+            restSeconds: 180,
+            restLabel: "3m",
+            cue: "Start every rep from a full dead-hang stretch. In Weeks 3–4 on Set 3, finish after failure with 5–6 controlled long-length partials in the top stretched half.",
+            extensionCue: "Set 3 (W3–4): +5–6 Long-Length Partials in top stretched half"
+          },
+          {
+            id: "pull_2",
+            name: "Chest-Supported T-Bar / Machine Row",
+            muscle: "Mid-Back & Rhomboids",
+            type: "Compound",
+            sets: 3,
+            minReps: 8,
+            maxReps: 10,
+            restSeconds: 150,
+            restLabel: "2.5m",
+            cue: "Let shoulders round forward over the pad at the bottom for a deep mid-trap stretch. In Weeks 3–4 on Set 3, lock elbows after failure and perform 6–8 Kelso shrugs.",
+            extensionCue: "Set 3 (W3–4): +6–8 Kelso Shrugs (scapular retractions with locked elbows)"
+          },
+          {
+            id: "pull_3",
+            name: "Cross-Body Lat Pull-Around / Prayer",
+            muscle: "Lower Lats",
+            type: "Isolation",
+            sets: 2,
+            minReps: 12,
+            maxReps: 15,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Kneel at a 45° angle to the cable stack, reach across your centerline for a full lat stretch, and drive your elbow down toward your hip.",
+            extensionCue: null
+          },
+          {
+            id: "pull_4",
+            name: "Reverse Pec Deck (Single-Arm)",
+            muscle: "Rear Delts",
+            type: "Isolation",
+            sets: 3,
+            minReps: 12,
+            maxReps: 15,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Sit sideways against the pad to double your lengthened range of motion. Sweep your hand wide as if reaching across the room.",
+            extensionCue: null
+          },
+          {
+            id: "pull_5",
+            name: "Bayesian Cable / Incline DB Curl",
+            muscle: "Biceps (Long Head)",
+            type: "Isolation",
+            sets: 3,
+            minReps: 10,
+            maxReps: 12,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Step forward in front of a low cable (or recline on incline bench) so your elbow stays pinned behind your torso for maximum bottom stretch tension.",
+            extensionCue: null
+          },
+          {
+            id: "pull_6",
+            name: "Preacher Curl",
+            muscle: "Biceps (Short Head)",
+            type: "Isolation",
+            sets: 2,
+            minReps: 8,
+            maxReps: 12,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Lock triceps firmly into the pad to eliminate momentum. Control the bottom 2 inches slowly without bouncing.",
+            extensionCue: null
+          }
+        ]
+      },
+      legs: {
+        id: "legs",
+        title: "Day 3: Legs",
+        subtitle: "Quads, Hamstrings, Glutes, Calves & Abs",
+        exercises: [
+          {
+            id: "legs_1",
+            name: "High-Bar Squat / Hack Squat",
+            muscle: "Quads",
+            type: "Compound",
+            sets: 3,
+            minReps: 6,
+            maxReps: 8,
+            restSeconds: 180,
+            restLabel: "3m",
+            cue: "Keep torso upright (use heel elevation on barbell squats) and drive knees forward for deep quad flexion. Optionally use 2/3 lockouts on later reps.",
+            extensionCue: "Optional (W3–4): 2/3 lockout on final reps for continuous quad tension"
+          },
+          {
+            id: "legs_2",
+            name: "Romanian Deadlift (RDL)",
+            muscle: "Hamstrings & Glutes",
+            type: "Compound",
+            sets: 3,
+            minReps: 8,
+            maxReps: 10,
+            restSeconds: 180,
+            restLabel: "3m",
+            cue: "Push hips straight back with soft, nearly straight knees until the bar reaches mid-shin (7/10 hamstring stretch), keeping a rigid neutral spine.",
+            extensionCue: null
+          },
+          {
+            id: "legs_3",
+            name: "Seated Leg Curl (Leaning Forward)",
+            muscle: "Hamstrings",
+            type: "Isolation",
+            sets: 3,
+            minReps: 10,
+            maxReps: 12,
+            restSeconds: 120,
+            restLabel: "2m",
+            cue: "Lock thigh pad tight, arch lower back, and lean torso forward to pre-stretch the hamstrings at the hip. Control the return slowly.",
+            extensionCue: null
+          },
+          {
+            id: "legs_4",
+            name: "Leg Extension (Seat Reclined)",
+            muscle: "Quads (Rectus Femoris)",
+            type: "Isolation",
+            sets: 3,
+            minReps: 12,
+            maxReps: 15,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Recline the backrest as far back as possible to lengthen the rectus femoris at the hip. Pause briefly at peak contraction and control the negative.",
+            extensionCue: null
+          },
+          {
+            id: "legs_5",
+            name: "Front-Foot Elevated Smith Lunge",
+            muscle: "Glutes & Quads",
+            type: "Compound",
+            sets: 2,
+            minReps: 10,
+            maxReps: 12,
+            repsSuffix: "/leg",
+            restSeconds: 120,
+            restLabel: "2m",
+            cue: "Take a long stride onto a low plate/step, sit deep back into the front hip to stretch the glute, and drive smoothly through the front heel.",
+            extensionCue: null
+          },
+          {
+            id: "legs_6",
+            name: "Standing Calf Raise / Leg Press Toe",
+            muscle: "Calves (Gastrocnemius)",
+            type: "Isolation",
+            sets: 3,
+            minReps: 10,
+            maxReps: 15,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Keep knees straight and pause for 1–2 full seconds in the deep bottom stretch on every rep; never bounce out of the bottom.",
+            extensionCue: null
+          },
+          {
+            id: "legs_7",
+            name: "Cable Crunch",
+            muscle: "Rectus Abdominis",
+            type: "Isolation",
+            sets: 3,
+            minReps: 12,
+            maxReps: 15,
+            restSeconds: 90,
+            restLabel: "90s",
+            cue: "Curl your ribcage down toward your pelvis rather than hinging at the hips, progressively adding weight week to week.",
+            extensionCue: null
+          }
+        ]
+      }
+    };
+
+    // =========================================================================
+    // 2. STATE MANAGEMENT & LOCALSTORAGE PERSISTENCE
+    // =========================================================================
+    const STORAGE_KEY = "stier_ppl_4week_tracker_v2";
+
+    let appState = {
+      activeWeek: 1,
+      activeTab: "push",
+      unit: "kg",
+      selectedAnalyticsExercise: "push_1",
+      expandedCues: {},
+      logs: {}
+    };
+
+    function getDefaultRIR(week, type) {
+      if (week === 1) return type === "Compound" ? "3" : "2";
+      if (week === 2) return type === "Compound" ? "2" : "1.5";
+      if (week === 3) return type === "Compound" ? "1.5" : "0.5";
+      return type === "Compound" ? "0.5" : "0";
+    }
+
+    function initEmptyLogs() {
+      const logs = {};
+      for (let w = 1; w <= 4; w++) {
+        logs[w] = {};
+        Object.values(PROGRAM_DATA).forEach(day => {
+          day.exercises.forEach(ex => {
+            logs[w][ex.id] = [];
+            for (let s = 0; s < ex.sets; s++) {
+              logs[w][ex.id].push({
+                weight: "",
+                reps: "",
+                rir: getDefaultRIR(w, ex.type),
+                completed: false
+              });
+            }
+          });
+        });
+      }
+      return logs;
+    }
+
+    function loadState() {
+      try {
+        // Support loading from either v2 or earlier v1 key seamlessly
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("stier_ppl_4week_tracker_v1");
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const defaultLogs = initEmptyLogs();
+          for (let w = 1; w <= 4; w++) {
+            if (parsed.logs && parsed.logs[w]) {
+              Object.keys(defaultLogs[w]).forEach(exId => {
+                if (Array.isArray(parsed.logs[w][exId])) {
+                  defaultLogs[w][exId] = defaultLogs[w][exId].map((defSet, idx) => ({
+                    ...defSet,
+                    ...(parsed.logs[w][exId][idx] || {})
+                  }));
+                }
+              });
+            }
+          }
+          appState = {
+            activeWeek: parsed.activeWeek || 1,
+            activeTab: parsed.activeTab || "push",
+            unit: parsed.unit || "kg",
+            selectedAnalyticsExercise: parsed.selectedAnalyticsExercise || "push_1",
+            expandedCues: parsed.expandedCues || {},
+            logs: defaultLogs
+          };
+        } else {
+          appState.logs = initEmptyLogs();
+        }
+      } catch (err) {
+        console.error("Error loading saved state:", err);
+        appState.logs = initEmptyLogs();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (err) {
+        console.error("Error saving state:", err);
+      }
+    }
+
+    // =========================================================================
+    // 3. SCREEN WAKE-LOCK API (KEEPS PHONE SCREEN AWAKE IN GYM)
+    // =========================================================================
+    let wakeLockSentinel = null;
+    let wakeLockDesired = false;
+
+    function updateWakeLockUI(isActive) {
+      const btn = document.getElementById("wake-lock-btn");
+      const dot = document.getElementById("wake-lock-dot");
+      const label = document.getElementById("wake-lock-label");
+      if (!btn || !dot || !label) return;
+
+      if (isActive) {
+        btn.className = "touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/50 text-xs font-extrabold text-emerald-300 shadow-sm shadow-emerald-500/10 transition shrink-0";
+        dot.className = "w-2 h-2 rounded-full bg-emerald-400 animate-pulse";
+        label.textContent = "Screen Awake: ON";
+      } else {
+        btn.className = "touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-bold text-zinc-300 transition shrink-0";
+        dot.className = "w-2 h-2 rounded-full bg-zinc-500";
+        label.textContent = "Keep Screen On";
+      }
+    }
+
+    async function requestWakeLock() {
+      if (!("wakeLock" in navigator)) {
+        showToast("Screen Wake-Lock is not supported in this browser.", "amber");
+        return;
+      }
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request("screen");
+        wakeLockDesired = true;
+        updateWakeLockUI(true);
+        wakeLockSentinel.addEventListener("release", () => {
+          wakeLockSentinel = null;
+          updateWakeLockUI(false);
+        });
+      } catch (err) {
+        wakeLockDesired = false;
+        updateWakeLockUI(false);
+        showToast("Could not activate Screen Wake-Lock (check battery saver).", "rose");
+      }
+    }
+
+    async function toggleWakeLock() {
+      if (wakeLockSentinel) {
+        wakeLockDesired = false;
+        await wakeLockSentinel.release();
+        wakeLockSentinel = null;
+        updateWakeLockUI(false);
+        showToast("Screen Wake-Lock turned off.", "zinc");
+      } else {
+        await requestWakeLock();
+        if (wakeLockSentinel) {
+          showToast("Screen will stay awake during your workout!", "emerald");
+        }
+      }
+    }
+
+    // Re-acquire wake lock automatically if user switches apps and returns
+    document.addEventListener("visibilitychange", async () => {
+      if (wakeLockDesired && document.visibilityState === "visible" && !wakeLockSentinel) {
+        await requestWakeLock();
+      }
+    });
+
+    // =========================================================================
+    // 4. WEB AUDIO API REST TIMER WITH SVG RING & +/-15s CONTROLS
+    // =========================================================================
+    let timerDuration = 120;
+    let timerRemaining = 120;
+    let timerRunning = false;
+    let timerInterval = null;
+    let audioCtx = null;
+
+    function playChime() {
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume();
+        }
+        const now = audioCtx.currentTime;
+        const notes = [587.33, 880, 1174.66]; // D5 -> A5 -> D6
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(freq, now + i * 0.14);
+          gain.gain.setValueAtTime(0.001, now + i * 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.22, now + i * 0.14 + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.14 + 0.55);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.14);
+          osc.stop(now + i * 0.14 + 0.6);
+        });
+      } catch (e) {
+        // Ignore audio restrictions silently
+      }
+    }
+
+    function formatTime(secs) {
+      const m = Math.floor(secs / 60);
+      const s = secs % 60;
+      return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    }
+
+    function updateTimerUI() {
+      const display = document.getElementById("timer-display");
+      const status = document.getElementById("timer-status");
+      const toggleBtn = document.getElementById("timer-toggle-btn");
+      const ring = document.getElementById("timer-ring");
+
+      display.textContent = formatTime(timerRemaining);
+
+      const circumference = 97.4;
+      const ratio = timerDuration > 0 ? Math.min(1, timerRemaining / timerDuration) : 0;
+      ring.style.strokeDashoffset = circumference * (1 - ratio);
+
+      if (timerRemaining === 0) {
+        status.textContent = "Rest Done!";
+        status.className = "text-[11px] font-extrabold uppercase tracking-wider text-amber-400";
+        ring.style.stroke = "#f59e0b";
+        toggleBtn.textContent = "Restart";
+      } else if (timerRunning) {
+        status.textContent = "Resting...";
+        status.className = "text-[11px] font-extrabold uppercase tracking-wider text-emerald-400 animate-pulse";
+        ring.style.stroke = "#10b981";
+        toggleBtn.textContent = "Pause";
+      } else {
+        status.textContent = "Ready";
+        status.className = "text-[11px] font-bold uppercase tracking-wider text-zinc-400";
+        ring.style.stroke = "#10b981";
+        toggleBtn.textContent = "Start";
+      }
+    }
+
+    function startTimer(seconds = null) {
+      if (seconds !== null) {
+        timerDuration = seconds;
+        timerRemaining = seconds;
+      } else if (timerRemaining <= 0) {
+        timerRemaining = timerDuration;
+      }
+
+      if (timerInterval) clearInterval(timerInterval);
+      timerRunning = true;
+      updateTimerUI();
+
+      timerInterval = setInterval(() => {
+        if (timerRemaining > 0) {
+          timerRemaining -= 1;
+          updateTimerUI();
+          if (timerRemaining === 0) {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            updateTimerUI();
+            playChime();
+            if ("vibrate" in navigator) {
+              navigator.vibrate([200, 100, 200]);
+            }
+            showToast("Rest complete! Time for your next set.", "emerald");
+          }
+        }
+      }, 1000);
+    }
+
+    function toggleTimer() {
+      if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        updateTimerUI();
+      } else {
+        startTimer();
+      }
+    }
+
+    function setTimerPreset(seconds) {
+      startTimer(seconds);
+    }
+
+    function adjustTimer(delta) {
+      timerRemaining = Math.max(0, timerRemaining + delta);
+      if (timerRemaining > timerDuration) {
+        timerDuration = timerRemaining;
+      }
+      updateTimerUI();
+    }
+
+    function resetTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerRunning = false;
+      timerRemaining = timerDuration;
+      updateTimerUI();
+    }
+
+    // =========================================================================
+    // 5. TOASTS & CUSTOM CONFIRMATION MODAL
+    // =========================================================================
+    function showToast(message, tone = "emerald") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const styleMap = {
+        emerald: "border-emerald-500/40 bg-zinc-900/95 text-emerald-200",
+        amber: "border-amber-500/40 bg-zinc-900/95 text-amber-200",
+        violet: "border-violet-500/40 bg-zinc-900/95 text-violet-200",
+        rose: "border-rose-500/40 bg-zinc-900/95 text-rose-200",
+        zinc: "border-zinc-700 bg-zinc-900/95 text-zinc-200"
+      };
+      const borderClass = styleMap[tone] || styleMap.emerald;
+
+      toast.className = `pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border ${borderClass} shadow-2xl text-xs sm:text-sm font-semibold transition-all duration-300`;
+      toast.innerHTML = `<span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-8px)";
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function requestResetData() {
+      const modal = document.getElementById("confirm-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      document.getElementById("confirm-cancel-btn").onclick = () => {
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+      };
+
+      document.getElementById("confirm-ok-btn").onclick = () => {
+        appState.logs = initEmptyLogs();
+        saveState();
+        modal.classList.add("hidden");
+        modal.classList.remove("flex");
+        renderApp();
+        showToast("All 4-week workout logs reset.", "rose");
+      };
+    }
+
+    // =========================================================================
+    // 6. DOUBLE-PROGRESSION ENGINE & HELPER ACTIONS
+    // =========================================================================
+    function getPreviousWeekSummary(week, exercise) {
+      if (week <= 1) return null;
+      const prevWeek = week - 1;
+      const prevSets = appState.logs[prevWeek]?.[exercise.id] || [];
+      const loggedSets = prevSets.filter(s => s.weight !== "" && s.reps !== "");
+      if (loggedSets.length === 0) {
+        return {
+          hasData: false,
+          text: `No sets logged in Week ${prevWeek}`,
+          hint: "Log weights & reps to unlock automatic double-progression guidance.",
+          hintType: "neutral"
+        };
+      }
+
+      const unit = appState.unit;
+      const summaryParts = loggedSets.map(s => `${s.weight}${unit} × ${s.reps}`);
+      const allHitTopReps = loggedSets.length === exercise.sets &&
+        loggedSets.every(s => Number(s.reps) >= exercise.maxReps);
+
+      const increment = exercise.type === "Compound"
+        ? (unit === "kg" ? "+2.5–5 kg" : "+5–10 lbs")
+        : (unit === "kg" ? "+1–2.5 kg" : "+2.5–5 lbs");
+
+      if (allHitTopReps) {
+        return {
+          hasData: true,
+          text: `W${prevWeek}: ${summaryParts.join(" | ")}`,
+          hint: `Hit ${exercise.maxReps} reps on all sets → Add ${increment} today!`,
+          hintType: "upgrade"
+        };
+      } else {
+        return {
+          hasData: true,
+          text: `W${prevWeek}: ${summaryParts.join(" | ")}`,
+          hint: `Keep W${prevWeek} weight and beat your reps toward ${exercise.maxReps}.`,
+          hintType: "build"
+        };
+      }
+    }
+
+    function copyPreviousWeekExercise(exerciseId) {
+      const week = appState.activeWeek;
+      if (week <= 1) return;
+      const prevSets = appState.logs[week - 1]?.[exerciseId] || [];
+      const currSets = appState.logs[week]?.[exerciseId] || [];
+
+      let copied = 0;
+      currSets.forEach((setObj, idx) => {
+        if (prevSets[idx] && prevSets[idx].weight !== "") {
+          setObj.weight = prevSets[idx].weight;
+          copied++;
+        }
+      });
+
+      saveState();
+      renderApp();
+      if (copied > 0) {
+        showToast(`Copied Week ${week - 1} weights (${copied} sets).`, "emerald");
+      } else {
+        showToast(`No weights logged in Week ${week - 1} for this exercise.`, "amber");
+      }
+    }
+
+    function copyPreviousWeekDay() {
+      const week = appState.activeWeek;
+      const tab = appState.activeTab;
+      if (week <= 1 || !PROGRAM_DATA[tab]) return;
+
+      let copiedCount = 0;
+      PROGRAM_DATA[tab].exercises.forEach(ex => {
+        const prevSets = appState.logs[week - 1]?.[ex.id] || [];
+        const currSets = appState.logs[week]?.[ex.id] || [];
+        currSets.forEach((setObj, idx) => {
+          if (prevSets[idx] && prevSets[idx].weight !== "") {
+            setObj.weight = prevSets[idx].weight;
+            copiedCount++;
+          }
+        });
+      });
+
+      saveState();
+      renderApp();
+      if (copiedCount > 0) {
+        showToast(`Copied Week ${week - 1} weights across ${PROGRAM_DATA[tab].title}!`, "emerald");
+      } else {
+        showToast(`No weights found in Week ${week - 1} for ${PROGRAM_DATA[tab].title}.`, "amber");
+      }
+    }
+
+    // =========================================================================
+    // 7. USER INTERACTIONS & SET LOGGING
+    // =========================================================================
+    function selectWeek(week) {
+      appState.activeWeek = week;
+      saveState();
+      renderApp();
+    }
+
+    function selectTab(tab) {
+      appState.activeTab = tab;
+      saveState();
+      renderApp();
+    }
+
+    function setUnit(unit) {
+      appState.unit = unit;
+      saveState();
+      renderApp();
+    }
+
+    function toggleCue(exerciseId) {
+      appState.expandedCues[exerciseId] = !appState.expandedCues[exerciseId];
+      saveState();
+      renderApp();
+    }
+
+    function updateSetField(exerciseId, setIndex, field, value) {
+      const week = appState.activeWeek;
+      if (!appState.logs[week]?.[exerciseId]?.[setIndex]) return;
+      appState.logs[week][exerciseId][setIndex][field] = value;
+      saveState();
+      updateSessionStatsOnly();
+    }
+
+    function toggleSetComplete(exerciseId, setIndex, restSeconds) {
+      const week = appState.activeWeek;
+      const setObj = appState.logs[week]?.[exerciseId]?.[setIndex];
+      if (!setObj) return;
+
+      setObj.completed = !setObj.completed;
+
+      if (setObj.completed && setObj.reps === "") {
+        const ex = findExerciseById(exerciseId);
+        if (ex) setObj.reps = String(ex.minReps);
+      }
+
+      saveState();
+      renderApp();
+
+      if (setObj.completed) {
+        startTimer(restSeconds);
+      }
+    }
+
+    function findExerciseById(exId) {
+      for (const day of Object.values(PROGRAM_DATA)) {
+        const found = day.exercises.find(e => e.id === exId);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function selectAnalyticsExercise(exId) {
+      appState.selectedAnalyticsExercise = exId;
+      saveState();
+      renderMainView();
+    }
+
+    // =========================================================================
+    // 8. EXPORT / IMPORT JSON BACKUP
+    // =========================================================================
+    function exportData() {
+      const payload = {
+        exportedAt: new Date().toISOString(),
+        program: "S-Tier PPL 4-Week Hypertrophy Tracker",
+        data: appState
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ppl-4week-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("JSON backup downloaded!", "emerald");
+    }
+
+    function importData(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          const importedState = parsed.data ? parsed.data : parsed;
+          if (!importedState.logs) throw new Error("Invalid backup structure");
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(importedState));
+          loadState();
+          renderApp();
+          showToast("Backup restored successfully!", "emerald");
+        } catch (err) {
+          showToast("Invalid JSON backup file.", "rose");
+        } finally {
+          event.target.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // =========================================================================
+    // 9. UI RENDERING
+    // =========================================================================
+    function renderWeekSelector() {
+      const grid = document.getElementById("week-selector-grid");
+      grid.innerHTML = [1, 2, 3, 4].map(w => {
+        const cfg = WEEK_CONFIG[w];
+        const isActive = appState.activeWeek === w;
+        const stats = getWeekCompletionStats(w);
+        const pct = stats.totalSets > 0 ? Math.round((stats.completedSets / stats.totalSets) * 100) : 0;
+
+        return `
+          <button onclick="selectWeek(${w})"
+            class="touch-target text-left p-3.5 rounded-2xl border transition-all ${
+              isActive
+                ? "bg-gradient-to-br from-emerald-500/15 to-violet-500/10 border-emerald-400/70 shadow-lg shadow-emerald-500/10"
+                : "bg-zinc-900/90 hover:bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+            }">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-extrabold uppercase tracking-wider ${isActive ? "text-emerald-300" : "text-zinc-400"}">
+                Week ${w}
+              </span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                pct === 100
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : isActive
+                  ? "bg-emerald-500/20 text-emerald-300"
+                  : "bg-zinc-800 text-zinc-400"
+              }">${pct}%</span>
+            </div>
+            <div class="text-sm font-bold text-white truncate">${cfg.shortTitle}</div>
+            <div class="text-[11px] text-zinc-400 mt-0.5 truncate">Comp: ${cfg.compoundRIR} &bull; Iso: ${cfg.isolationRIR}</div>
+          </button>
+        `;
+      }).join("");
+    }
+
+    function renderWeekBanner() {
+      const banner = document.getElementById("week-banner");
+      const cfg = WEEK_CONFIG[appState.activeWeek];
+
+      banner.innerHTML = `
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div class="space-y-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-extrabold uppercase tracking-wide">
+                ${cfg.name}
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-200 text-xs font-semibold">
+                Compounds: <strong class="text-emerald-400">${cfg.compoundRIR}</strong>
+              </span>
+              <span class="px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-200 text-xs font-semibold">
+                Isolations: <strong class="text-violet-400">${cfg.isolationRIR}</strong>
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed">${cfg.goal}</p>
+          </div>
+
+          <div class="lg:max-w-xs w-full rounded-xl bg-zinc-950/80 border border-zinc-800 p-3 shrink-0">
+            <div class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400 mb-0.5">Set-Extension Rule</div>
+            <div class="text-xs text-zinc-300 leading-snug">${cfg.setExtension}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function getWeekCompletionStats(week) {
+      let totalSets = 0;
+      let completedSets = 0;
+      Object.values(PROGRAM_DATA).forEach(day => {
+        day.exercises.forEach(ex => {
+          const sets = appState.logs[week]?.[ex.id] || [];
+          totalSets += ex.sets;
+          completedSets += sets.filter(s => s.completed).length;
+        });
+      });
+      return { totalSets, completedSets };
+    }
+
+    function getDayStats(week, dayId) {
+      const day = PROGRAM_DATA[dayId];
+      if (!day) return { totalSets: 0, completedSets: 0, volume: 0 };
+      let totalSets = 0;
+      let completedSets = 0;
+      let volume = 0;
+
+      day.exercises.forEach(ex => {
+        const sets = appState.logs[week]?.[ex.id] || [];
+        totalSets += ex.sets;
+        sets.forEach(s => {
+          if (s.completed) completedSets++;
+          const w = parseFloat(s.weight);
+          const r = parseFloat(s.reps);
+          if (!isNaN(w) && !isNaN(r) && w > 0 && r > 0) {
+            volume += w * r;
+          }
+        });
+      });
+
+      return { totalSets, completedSets, volume };
+    }
+
+    function updateSessionStatsOnly() {
+      const tab = appState.activeTab;
+      if (!PROGRAM_DATA[tab]) return;
+      const week = appState.activeWeek;
+      const stats = getDayStats(week, tab);
+      const pct = stats.totalSets > 0 ? Math.round((stats.completedSets / stats.totalSets) * 100) : 0;
+
+      document.getElementById("session-title-label").textContent = `${PROGRAM_DATA[tab].title} (Week ${week})`;
+      document.getElementById("session-volume-badge").textContent = `${Math.round(stats.volume).toLocaleString()} ${appState.unit} volume`;
+      document.getElementById("session-progress-text").textContent = `${stats.completedSets} / ${stats.totalSets} Sets (${pct}%)`;
+      document.getElementById("session-progress-bar").style.width = `${pct}%`;
+    }
+
+    function renderNavigationAndBars() {
+      const kgBtn = document.getElementById("unit-kg-btn");
+      const lbsBtn = document.getElementById("unit-lbs-btn");
+      if (appState.unit === "kg") {
+        kgBtn.className = "px-3 py-2 rounded-lg text-xs font-extrabold bg-emerald-500 text-zinc-950 shadow transition";
+        lbsBtn.className = "px-3 py-2 rounded-lg text-xs font-extrabold text-zinc-400 hover:text-white transition";
+      } else {
+        lbsBtn.className = "px-3 py-2 rounded-lg text-xs font-extrabold bg-emerald-500 text-zinc-950 shadow transition";
+        kgBtn.className = "px-3 py-2 rounded-lg text-xs font-extrabold text-zinc-400 hover:text-white transition";
+      }
+
+      ["push", "pull", "legs", "analytics"].forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        const isActive = appState.activeTab === t;
+        el.className = isActive
+          ? "touch-target px-2.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-extrabold bg-zinc-800 text-white shadow-sm border border-zinc-700 transition flex items-center justify-center gap-1.5"
+          : "touch-target px-2.5 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-zinc-400 hover:text-zinc-200 transition flex items-center justify-center gap-1.5";
+      });
+
+      const isWorkoutTab = Boolean(PROGRAM_DATA[appState.activeTab]);
+      document.getElementById("day-quick-actions").style.display = isWorkoutTab ? "flex" : "none";
+      document.getElementById("session-progress-wrapper").style.display = isWorkoutTab ? "block" : "none";
+
+      const copyDayBtn = document.getElementById("copy-prev-day-btn");
+      if (appState.activeWeek === 1) {
+        copyDayBtn.disabled = true;
+        copyDayBtn.className = "touch-target inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-zinc-900/40 border border-zinc-800/60 text-xs font-semibold text-zinc-600 cursor-not-allowed";
+      } else {
+        copyDayBtn.disabled = false;
+        copyDayBtn.className = "touch-target inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 border border-zinc-700/80 text-xs font-bold text-emerald-300 transition";
+      }
+
+      if (isWorkoutTab) {
+        updateSessionStatsOnly();
+      }
+    }
+
+    function renderWorkoutView(dayId) {
+      const day = PROGRAM_DATA[dayId];
+      const week = appState.activeWeek;
+      const weekCfg = WEEK_CONFIG[week];
+      const unit = appState.unit;
+
+      return day.exercises.map((ex, index) => {
+        const sets = appState.logs[week]?.[ex.id] || [];
+        const targetRIR = ex.type === "Compound" ? weekCfg.compoundRIR : weekCfg.isolationRIR;
+        const prevSummary = getPreviousWeekSummary(week, ex);
+        const isCueOpen = Boolean(appState.expandedCues[ex.id]);
+        const completedCount = sets.filter(s => s.completed).length;
+        const allDone = completedCount === ex.sets;
+        const showIntensityBadge = (week === 3 || week === 4) && ex.extensionCue;
+
+        return `
+          <article class="rounded-2xl bg-zinc-900/95 border ${allDone ? "border-emerald-500/50" : "border-zinc-800"} overflow-hidden shadow-lg transition">
+            <!-- Exercise Header -->
+            <div class="p-4 sm:p-5 border-b border-zinc-800/80">
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div class="space-y-1.5">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-zinc-800 text-xs font-extrabold text-emerald-400 shrink-0">
+                      ${index + 1}
+                    </span>
+                    <h2 class="text-base sm:text-lg font-extrabold text-white leading-snug">${ex.name}</h2>
+                  </div>
+
+                  <!-- Badges -->
+                  <div class="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span class="px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-300 text-xs font-medium">
+                      ${ex.muscle}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-md text-xs font-semibold ${
+                      ex.type === "Compound"
+                        ? "bg-violet-500/15 text-violet-300 border border-violet-500/30"
+                        : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                    }">
+                      ${ex.type}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-md bg-zinc-800 text-zinc-100 text-xs font-bold">
+                      ${ex.sets} × ${ex.minReps}–${ex.maxReps}${ex.repsSuffix || ""}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 text-xs font-extrabold">
+                      Target: ${targetRIR}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Exercise Action Buttons (44px+ Touch Targets) -->
+                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                  <button onclick="startTimer(${ex.restSeconds})"
+                    class="touch-target inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/35 text-emerald-300 text-xs font-extrabold transition"
+                    title="Start ${ex.restLabel} rest timer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Rest ${ex.restLabel}</span>
+                  </button>
+
+                  ${week > 1 ? `
+                    <button onclick="copyPreviousWeekExercise('${ex.id}')"
+                      class="touch-target inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition"
+                      title="Copy Week ${week - 1} weights">
+                      <span>Copy W${week - 1}</span>
+                    </button>
+                  ` : ""}
+
+                  <button onclick="toggleCue('${ex.id}')"
+                    class="touch-target inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition">
+                    <span>Cue</span>
+                    <svg class="w-4 h-4 transition-transform ${isCueOpen ? "rotate-180" : ""}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Collapsible Science Execution Cue -->
+              <div class="${isCueOpen ? "block" : "hidden"} mt-3 pt-3 border-t border-zinc-800">
+                <div class="flex items-start gap-2.5 rounded-xl bg-zinc-950/90 p-3.5 border border-zinc-800">
+                  <span class="text-emerald-400 font-extrabold text-xs uppercase tracking-wider shrink-0 mt-0.5">Science Cue:</span>
+                  <p class="text-xs sm:text-sm text-zinc-300 leading-relaxed">${ex.cue}</p>
+                </div>
+              </div>
+
+              <!-- Week 3-4 Set-Extension Callout -->
+              ${showIntensityBadge ? `
+                <div class="mt-3 flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/12 border border-amber-500/35 text-amber-200 text-xs font-bold">
+                  <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>${ex.extensionCue}</span>
+                </div>
+              ` : ""}
+
+              <!-- Double-Progression Guidance Banner -->
+              ${prevSummary ? `
+                <div class="mt-3 rounded-xl px-3.5 py-2.5 border text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 ${
+                  prevSummary.hintType === "upgrade"
+                    ? "bg-emerald-500/12 border-emerald-500/35 text-emerald-200"
+                    : prevSummary.hintType === "build"
+                    ? "bg-violet-500/12 border-violet-500/30 text-violet-200"
+                    : "bg-zinc-950/60 border-zinc-800 text-zinc-400"
+                }">
+                  <span class="font-semibold">${prevSummary.text}</span>
+                  <span class="font-extrabold">${prevSummary.hint}</span>
+                </div>
+              ` : ""}
+            </div>
+
+            <!-- Set Logging Rows (Large Mobile Inputs & Checkmarks) -->
+            <div class="p-3 sm:p-4 bg-zinc-950/40">
+              <div class="grid grid-cols-12 gap-2 px-2 pb-2 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                <div class="col-span-2 sm:col-span-1">Set</div>
+                <div class="col-span-3 sm:col-span-3">Prev</div>
+                <div class="col-span-3 sm:col-span-3">Weight (${unit})</div>
+                <div class="col-span-2 sm:col-span-2">Reps</div>
+                <div class="col-span-2 sm:col-span-2 text-center">RIR</div>
+                <div class="col-span-12 sm:col-span-1 hidden sm:block text-right">Done</div>
+              </div>
+
+              <div class="space-y-2.5">
+                ${sets.map((s, sIdx) => {
+                  const prevSet = week > 1 ? appState.logs[week - 1]?.[ex.id]?.[sIdx] : null;
+                  const prevGhost = prevSet && prevSet.weight !== "" && prevSet.reps !== ""
+                    ? `${prevSet.weight}${unit} × ${prevSet.reps}`
+                    : "—";
+                  const isFinalSet = sIdx === ex.sets - 1;
+
+                  return `
+                    <div class="grid grid-cols-12 items-center gap-2 p-2 rounded-xl border transition ${
+                      s.completed
+                        ? "bg-emerald-950/30 border-emerald-500/40"
+                        : "bg-zinc-900 border-zinc-800"
+                    }">
+                      <!-- Set Badge -->
+                      <div class="col-span-2 sm:col-span-1 flex items-center">
+                        <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold ${
+                          s.completed ? "bg-emerald-500 text-zinc-950" : "bg-zinc-800 text-zinc-300"
+                        }">${sIdx + 1}</span>
+                      </div>
+
+                      <!-- Previous Week Ghost Reference -->
+                      <div class="col-span-3 sm:col-span-3 text-xs font-mono text-zinc-400 truncate">
+                        ${prevGhost}
+                      </div>
+
+                      <!-- Weight Input (44px min height) -->
+                      <div class="col-span-3 sm:col-span-3">
+                        <input
+                          type="number"
+                          step="0.5"
+                          inputmode="decimal"
+                          placeholder="${prevSet && prevSet.weight ? prevSet.weight : '0'}"
+                          value="${s.weight}"
+                          oninput="updateSetField('${ex.id}', ${sIdx}, 'weight', this.value)"
+                          aria-label="Set ${sIdx + 1} weight in ${unit}"
+                          class="touch-target w-full px-2 py-2 rounded-xl bg-zinc-950 border border-zinc-700 focus:border-emerald-400 focus:outline-none text-sm font-extrabold text-white text-center placeholder:text-zinc-600"
+                        />
+                      </div>
+
+                      <!-- Reps Input (44px min height) -->
+                      <div class="col-span-2 sm:col-span-2">
+                        <input
+                          type="number"
+                          inputmode="numeric"
+                          placeholder="${ex.minReps}-${ex.maxReps}"
+                          value="${s.reps}"
+                          oninput="updateSetField('${ex.id}', ${sIdx}, 'reps', this.value)"
+                          aria-label="Set ${sIdx + 1} reps"
+                          class="touch-target w-full px-1.5 py-2 rounded-xl bg-zinc-950 border border-zinc-700 focus:border-emerald-400 focus:outline-none text-sm font-extrabold text-white text-center placeholder:text-zinc-600"
+                        />
+                      </div>
+
+                      <!-- RIR Selector (44px min height) -->
+                      <div class="col-span-2 sm:col-span-2">
+                        <select
+                          onchange="updateSetField('${ex.id}', ${sIdx}, 'rir', this.value)"
+                          aria-label="Set ${sIdx + 1} RIR"
+                          class="touch-target w-full px-1 py-2 rounded-xl bg-zinc-950 border border-zinc-700 focus:border-emerald-400 focus:outline-none text-xs font-extrabold text-amber-300 text-center">
+                          <option value="4" ${s.rir === "4" ? "selected" : ""}>4 RIR</option>
+                          <option value="3" ${s.rir === "3" ? "selected" : ""}>3 RIR</option>
+                          <option value="2" ${s.rir === "2" ? "selected" : ""}>2 RIR</option>
+                          <option value="1.5" ${s.rir === "1.5" ? "selected" : ""}>1-2</option>
+                          <option value="1" ${s.rir === "1" ? "selected" : ""}>1 RIR</option>
+                          <option value="0.5" ${s.rir === "0.5" ? "selected" : ""}>0-1</option>
+                          <option value="0" ${s.rir === "0" ? "selected" : ""}>0 Fail</option>
+                        </select>
+                      </div>
+
+                      <!-- Large Thumb-Friendly Checkmark Button -->
+                      <div class="col-span-12 sm:col-span-1 flex justify-end mt-1 sm:mt-0">
+                        <button
+                          onclick="toggleSetComplete('${ex.id}', ${sIdx}, ${ex.restSeconds})"
+                          aria-label="Mark Set ${sIdx + 1} complete"
+                          class="touch-target w-full sm:w-11 h-11 rounded-xl flex items-center justify-center font-extrabold text-xs transition ${
+                            s.completed
+                              ? "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-md shadow-emerald-500/20"
+                              : "bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700"
+                          }">
+                          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.8" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span class="sm:hidden ml-2">${s.completed ? "Set Completed" : (isFinalSet && showIntensityBadge ? "Complete Set + Extension" : "Complete Set")}</span>
+                        </button>
+                      </div>
+                    </div>
+                  `;
+                }).join("")}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    // =========================================================================
+    // 10. PROGRESS ANALYTICS & 4-WEEK MATRIX VIEW
+    // =========================================================================
+    function computeGlobalAnalytics() {
+      let totalSetsAllWeeks = 0;
+      let completedSetsAllWeeks = 0;
+      let totalVolumeAllWeeks = 0;
+      let completedWorkouts = 0;
+      let prsAchieved = 0;
+
+      for (let w = 1; w <= 4; w++) {
+        Object.values(PROGRAM_DATA).forEach(day => {
+          let dayTotal = 0;
+          let dayDone = 0;
+          day.exercises.forEach(ex => {
+            const sets = appState.logs[w]?.[ex.id] || [];
+            totalSetsAllWeeks += ex.sets;
+            dayTotal += ex.sets;
+            sets.forEach(s => {
+              if (s.completed) {
+                completedSetsAllWeeks++;
+                dayDone++;
+              }
+              const wt = parseFloat(s.weight);
+              const rp = parseFloat(s.reps);
+              if (!isNaN(wt) && !isNaN(rp) && wt > 0 && rp > 0) {
+                totalVolumeAllWeeks += wt * rp;
+              }
+            });
+          });
+          if (dayTotal > 0 && dayDone === dayTotal) {
+            completedWorkouts++;
+          }
+        });
+      }
+
+      Object.values(PROGRAM_DATA).forEach(day => {
+        day.exercises.forEach(ex => {
+          const w1Best = getExerciseWeekMetrics(1, ex.id).bestE1RM;
+          if (w1Best > 0) {
+            const laterBest = Math.max(
+              getExerciseWeekMetrics(2, ex.id).bestE1RM,
+              getExerciseWeekMetrics(3, ex.id).bestE1RM,
+              getExerciseWeekMetrics(4, ex.id).bestE1RM
+            );
+            if (laterBest > w1Best) prsAchieved++;
+          }
+        });
+      });
+
+      return {
+        totalSetsAllWeeks,
+        completedSetsAllWeeks,
+        totalVolumeAllWeeks,
+        completedWorkouts,
+        prsAchieved
+      };
+    }
+
+    function getExerciseWeekMetrics(week, exId) {
+      const sets = appState.logs[week]?.[exId] || [];
+      let volume = 0;
+      let bestE1RM = 0;
+
+      sets.forEach(s => {
+        const w = parseFloat(s.weight);
+        const r = parseFloat(s.reps);
+        if (!isNaN(w) && !isNaN(r) && w > 0 && r > 0) {
+          volume += w * r;
+          const e1rm = r === 1 ? w : w * (1 + r / 30);
+          if (e1rm > bestE1RM) {
+            bestE1RM = e1rm;
+          }
+        }
+      });
+
+      return { volume: Math.round(volume), bestE1RM: Math.round(bestE1RM * 10) / 10 };
+    }
+
+    function buildSVGChart(exId) {
+      const weeklyMetrics = [1, 2, 3, 4].map(w => ({
+        week: w,
+        ...getExerciseWeekMetrics(w, exId)
+      }));
+
+      const volumes = weeklyMetrics.map(m => m.volume);
+      const e1rms = weeklyMetrics.map(m => m.bestE1RM);
+      const maxVol = Math.max(...volumes, 100);
+      const maxE1rm = Math.max(...e1rms, 20);
+
+      const width = 640;
+      const height = 220;
+      const padLeft = 52;
+      const padRight = 52;
+      const padTop = 26;
+      const padBottom = 34;
+      const plotW = width - padLeft - padRight;
+      const plotH = height - padTop - padBottom;
+
+      const xPositions = [0, 1, 2, 3].map(i => padLeft + (i * plotW) / 3);
+      const volPoints = weeklyMetrics.map((m, i) => ({
+        x: xPositions[i],
+        y: padTop + plotH - (m.volume / maxVol) * plotH,
+        val: m.volume
+      }));
+      const e1rmPoints = weeklyMetrics.map((m, i) => ({
+        x: xPositions[i],
+        y: padTop + plotH - (m.bestE1RM / maxE1rm) * plotH,
+        val: m.bestE1RM
+      }));
+
+      const volPath = volPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+      const e1rmPath = e1rmPoints.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+
+      const hasAnyData = volumes.some(v => v > 0);
+
+      if (!hasAnyData) {
+        return `
+          <div class="h-52 flex flex-col items-center justify-center text-center rounded-xl bg-zinc-950/70 border border-dashed border-zinc-800 p-6">
+            <p class="text-sm font-bold text-zinc-300">No sets logged yet for this exercise</p>
+            <p class="text-xs text-zinc-500 mt-1">Log weights & reps across Weeks 1–4 to visualize Volume Load & Estimated 1RM progression.</p>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="w-full overflow-x-auto">
+          <svg viewBox="0 0 ${width} ${height}" class="w-full h-auto min-w-[340px] select-none">
+            ${[0, 0.5, 1].map(t => {
+              const y = padTop + plotH * (1 - t);
+              return `<line x1="${padLeft}" y1="${y}" x2="${width - padRight}" y2="${y}" stroke="#27272a" stroke-dasharray="4 4" />`;
+            }).join("")}
+
+            ${xPositions.map((x, idx) => `
+              <text x="${x}" y="${height - 10}" text-anchor="middle" fill="#a1a1aa" font-size="11" font-weight="700">
+                Week ${idx + 1}
+              </text>
+            `).join("")}
+
+            <text x="${padLeft - 8}" y="${padTop + 4}" text-anchor="end" fill="#34d399" font-size="10" font-weight="700">${maxVol}</text>
+            <text x="${padLeft - 8}" y="${padTop + plotH}" text-anchor="end" fill="#71717a" font-size="10">0</text>
+
+            <text x="${width - padRight + 8}" y="${padTop + 4}" text-anchor="start" fill="#fbbf24" font-size="10" font-weight="700">${maxE1rm}</text>
+            <text x="${width - padRight + 8}" y="${padTop + plotH}" text-anchor="start" fill="#71717a" font-size="10">0</text>
+
+            <path d="${volPath}" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="${e1rmPath}" fill="none" stroke="#f59e0b" stroke-width="3" stroke-dasharray="6 3" stroke-linecap="round" stroke-linejoin="round" />
+
+            ${volPoints.map(p => `
+              <circle cx="${p.x}" cy="${p.y}" r="5" fill="#10b981" stroke="#09090b" stroke-width="2" />
+              <text x="${p.x}" y="${p.y - 10}" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="700">${p.val}</text>
+            `).join("")}
+
+            ${e1rmPoints.map(p => `
+              <circle cx="${p.x}" cy="${p.y}" r="4.5" fill="#f59e0b" stroke="#09090b" stroke-width="2" />
+              <text x="${p.x}" y="${p.y + 16}" text-anchor="middle" fill="#fcd34d" font-size="10" font-weight="700">${p.val}${appState.unit}</text>
+            `).join("")}
+          </svg>
+        </div>
+      `;
+    }
+
+    function renderAnalyticsView() {
+      const kpis = computeGlobalAnalytics();
+      const unit = appState.unit;
+      const allExercises = [
+        ...PROGRAM_DATA.push.exercises.map(e => ({ ...e, dayLabel: "Push" })),
+        ...PROGRAM_DATA.pull.exercises.map(e => ({ ...e, dayLabel: "Pull" })),
+        ...PROGRAM_DATA.legs.exercises.map(e => ({ ...e, dayLabel: "Legs" }))
+      ];
+
+      return `
+        <div class="space-y-5">
+          <!-- KPI Summary Grid -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
+              <div class="text-xs font-semibold text-zinc-400">Sets Completed</div>
+              <div class="text-2xl font-extrabold text-white mt-1">
+                ${kpis.completedSetsAllWeeks} <span class="text-sm font-semibold text-zinc-500">/ ${kpis.totalSetsAllWeeks}</span>
+              </div>
+              <div class="text-[11px] text-emerald-400 font-bold mt-1">
+                ${Math.round((kpis.completedSetsAllWeeks / kpis.totalSetsAllWeeks) * 100)}% Mesocycle
+              </div>
+            </div>
+
+            <div class="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
+              <div class="text-xs font-semibold text-zinc-400">Total Volume Load</div>
+              <div class="text-2xl font-extrabold text-emerald-400 mt-1">
+                ${Math.round(kpis.totalVolumeAllWeeks).toLocaleString()} <span class="text-sm font-bold">${unit}</span>
+              </div>
+              <div class="text-[11px] text-zinc-400 mt-1">Weight × Reps Total</div>
+            </div>
+
+            <div class="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
+              <div class="text-xs font-semibold text-zinc-400">Workouts Done</div>
+              <div class="text-2xl font-extrabold text-violet-400 mt-1">
+                ${kpis.completedWorkouts} <span class="text-sm font-semibold text-zinc-500">/ 12</span>
+              </div>
+              <div class="text-[11px] text-zinc-400 mt-1">3 Days × 4 Weeks</div>
+            </div>
+
+            <div class="rounded-2xl bg-zinc-900 border border-zinc-800 p-4">
+              <div class="text-xs font-semibold text-zinc-400">Exercises With PRs</div>
+              <div class="text-2xl font-extrabold text-amber-400 mt-1">
+                ${kpis.prsAchieved} <span class="text-sm font-semibold text-zinc-500">/ ${allExercises.length}</span>
+              </div>
+              <div class="text-[11px] text-zinc-400 mt-1">Above Week 1 Est. 1RM</div>
+            </div>
+          </div>
+
+          <!-- Interactive SVG Progression Chart -->
+          <div class="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 sm:p-5 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-extrabold text-white">4-Week Exercise Progression</h3>
+                <div class="flex items-center gap-4 text-xs mt-1">
+                  <span class="inline-flex items-center gap-1.5 text-emerald-300 font-bold">
+                    <span class="w-3 h-0.5 bg-emerald-400 inline-block"></span> Volume Load (${unit})
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 text-amber-300 font-bold">
+                    <span class="w-3 h-0.5 bg-amber-400 inline-block"></span> Best Est. 1RM (${unit})
+                  </span>
+                </div>
+              </div>
+
+              <select
+                onchange="selectAnalyticsExercise(this.value)"
+                aria-label="Select exercise for progression chart"
+                class="touch-target px-3 py-2 rounded-xl bg-zinc-950 border border-zinc-700 text-xs sm:text-sm font-bold text-white focus:border-emerald-400 focus:outline-none">
+                ${allExercises.map(ex => `
+                  <option value="${ex.id}" ${appState.selectedAnalyticsExercise === ex.id ? "selected" : ""}>
+                    [${ex.dayLabel}] ${ex.name}
+                  </option>
+                `).join("")}
+              </select>
+            </div>
+
+            ${buildSVGChart(appState.selectedAnalyticsExercise)}
+          </div>
+
+          <!-- 4-Week Side-by-Side Comparison Matrix -->
+          <div class="rounded-2xl bg-zinc-900 border border-zinc-800 overflow-hidden">
+            <div class="p-4 sm:p-5 border-b border-zinc-800">
+              <h3 class="text-base font-extrabold text-white">4-Week Progressive Overload Matrix</h3>
+              <p class="text-xs text-zinc-400 mt-0.5">Logged Weight × Reps across Weeks 1–4</p>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse min-w-[680px]">
+                <thead>
+                  <tr class="bg-zinc-950 border-b border-zinc-800 text-[11px] font-bold uppercase tracking-wider text-zinc-400">
+                    <th class="py-3 px-4">Exercise</th>
+                    <th class="py-3 px-3 text-center">Week 1 <span class="text-zinc-500">(3/2 RIR)</span></th>
+                    <th class="py-3 px-3 text-center">Week 2 <span class="text-zinc-500">(2/1-2)</span></th>
+                    <th class="py-3 px-3 text-center">Week 3 <span class="text-zinc-500">(1-2/0-1)</span></th>
+                    <th class="py-3 px-3 text-center">Week 4 <span class="text-zinc-500">(0-1/0)</span></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-800/80 text-xs">
+                  ${allExercises.map(ex => {
+                    const weekCells = [1, 2, 3, 4].map(w => {
+                      const sets = appState.logs[w]?.[ex.id] || [];
+                      const valid = sets.filter(s => s.weight !== "" && s.reps !== "");
+                      if (valid.length === 0) return `<span class="text-zinc-600">—</span>`;
+                      const weights = [...new Set(valid.map(s => s.weight))];
+                      const repsList = valid.map(s => s.reps).join(", ");
+                      const wtDisplay = weights.length === 1 ? `${weights[0]}${unit}` : valid.map(s => `${s.weight}${unit}`).join("/");
+                      return `<span class="font-mono font-bold text-zinc-200">${wtDisplay} × [${repsList}]</span>`;
+                    });
+
+                    return `
+                      <tr class="hover:bg-zinc-800/40 transition">
+                        <td class="py-3 px-4">
+                          <div class="font-bold text-zinc-100">${ex.name}</div>
+                          <div class="text-[11px] text-zinc-500">${ex.dayLabel} &bull; ${ex.sets}×${ex.minReps}-${ex.maxReps}</div>
+                        </td>
+                        ${weekCells.map(cell => `<td class="py-3 px-3 text-center">${cell}</td>`).join("")}
+                      </tr>
+                    `;
+                  }).join("")}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMainView() {
+      const container = document.getElementById("main-view-container");
+      if (appState.activeTab === "analytics") {
+        container.innerHTML = renderAnalyticsView();
+      } else {
+        container.innerHTML = renderWorkoutView(appState.activeTab);
+      }
+    }
+
+    function renderApp() {
+      renderWeekSelector();
+      renderWeekBanner();
+      renderNavigationAndBars();
+      renderMainView();
+    }
+
+    // =========================================================================
+    // 11. BOOTSTRAP
+    // =========================================================================
+    window.addEventListener("DOMContentLoaded", () => {
+      loadState();
+      renderApp();
+      updateTimerUI();
+    });
+  </script>
+</body>
+</html>
